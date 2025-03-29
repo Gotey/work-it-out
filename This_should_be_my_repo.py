@@ -42,10 +42,14 @@ def calc_angle(p1, p2):
 # === Pose Classifier ===
 
 def classify_pose(landmarks, h, w):
-    ls, rs = to_pixel(landmarks[LEFT_SHOULDER], w, h)
-    le, re = to_pixel(landmarks[LEFT_ELBOW], w, h)
-    lh, rh = to_pixel(landmarks[LEFT_HIP], w, h)
-    lk, rk = to_pixel(landmarks[LEFT_KNEE], w, h)
+    ls = to_pixel(landmarks[LEFT_SHOULDER], w, h)
+    rs = to_pixel(landmarks[RIGHT_SHOULDER], w, h)
+    le = to_pixel(landmarks[LEFT_ELBOW], w, h)
+    re = to_pixel(landmarks[RIGHT_ELBOW], w, h)
+    lh = to_pixel(landmarks[LEFT_HIP], w, h)
+    rh = to_pixel(landmarks[RIGHT_HIP], w, h)
+    lk = to_pixel(landmarks[LEFT_KNEE], w, h)
+    rk = to_pixel(landmarks[RIGHT_KNEE], w, h)
 
     arms_horizontal = abs(ls[1] - le[1]) < 40 and abs(rs[1] - re[1]) < 40
     knees_near_hips = abs(lk[1] - lh[1]) < 60 and abs(rk[1] - rh[1]) < 60
@@ -56,6 +60,7 @@ def classify_pose(landmarks, h, w):
         return "SITTING"
     else:
         return "UNKNOWN"
+
 
 # === Webcam Setup ===
 
