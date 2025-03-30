@@ -12,7 +12,7 @@ import {
   isExerciseCompleted,
   isDayCompleted,
 } from "@/lib/progress";
-import { slugify } from "@/lib/slugify"; // ← make sure it's imported
+import { slugify } from "@/lib/slugify";
 
 export default function ExercisePage() {
   const { day, name } = useParams() as { day: string; name: string };
@@ -23,6 +23,7 @@ export default function ExercisePage() {
   const [currentRep, setCurrentRep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     const plan = JSON.parse(localStorage.getItem("workoutPlan") || "{}");
@@ -52,6 +53,21 @@ export default function ExercisePage() {
     }
   };
 
+  const startExercise = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:5000/start-exercise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exercise: exercise?.name }),
+      });
+      await res.json();
+      setStarted(true);
+      setTimeout(() => setStarted(false), 3000);
+    } catch (err) {
+      console.error("Error starting exercise:", err);
+    }
+  };
+
   if (!exercise) return <div>Exercise not found</div>;
 
   return (
@@ -61,16 +77,51 @@ export default function ExercisePage() {
       </Link>
 
       <Card className="relative overflow-hidden">
+        {/* Camera Button */}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={startExercise}
+          className="absolute top-2 right-2 z-10"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-camera"
+          >
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+            <circle cx="12" cy="13" r="3" />
+          </svg>
+          <span className="sr-only">Start Camera</span>
+        </Button>
+
         <div className="relative aspect-video w-full">
           <Image
-            src={
-              exercise.gif ? `/exercises/${exercise.gif}` : "/placeholder.svg"
-            }
+            src={exercise.gif ? `/exercises/${exercise.gif}` : "/placeholder.svg"}
             alt={exercise.name}
             fill
             className="object-cover rounded-t-md"
           />
         </div>
+
+        <AnimatePresence>
+          {started && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-500 text-white text-sm px-4 py-2 rounded shadow"
+            >
+              Exercise script started via Flask!
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <CardContent className="p-4">
           <h1 className="text-xl font-bold mb-2">{exercise.name}</h1>
@@ -106,8 +157,7 @@ export default function ExercisePage() {
                     variant="outline"
                     size="icon"
                     onClick={() => {
-                      if (currentRep < exercise.reps)
-                        setCurrentRep(currentRep + 1);
+                      if (currentRep < exercise.reps) setCurrentRep(currentRep + 1);
                       else if (currentSet < exercise.sets) {
                         setCurrentSet(currentSet + 1);
                         setCurrentRep(1);
