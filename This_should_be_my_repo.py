@@ -1,6 +1,5 @@
 import cv2
 import mediapipe as mp
-from collections import deque
 
 # === CONFIGURATION ===
 CONFIG = {
@@ -24,9 +23,10 @@ KEYPOINTS = {
     "LEFT_ANKLE": 27, "RIGHT_ANKLE": 28
 }
 
-rep_count = 0
-rep_state = "WAITING_DOWN"  # Possible values: WAITING_DOWN, WAITING_UP
-hit_bottom = False
+# === Tracking State ===
+rep_count = {"DEADLIFT": 0, "SQUAT": 0}
+rep_state = {"DEADLIFT": "WAITING_DOWN", "SQUAT": "WAITING_DOWN"}
+hit_bottom = {"DEADLIFT": False, "SQUAT": False}
 
 # === Utility Functions ===
 def get_y(lm, h):
@@ -38,34 +38,32 @@ def visible(lm):
 def average_y(lm1, lm2, h):
     return (get_y(lm1, h) + get_y(lm2, h)) / 2
 
-# === Deadlift Phase Detection ===
-def detect_deadlift_status(landmarks, h):
+# === Movement Logic ===
+def get_pose_status(landmarks, h):
     required = [
         "LEFT_HIP", "RIGHT_HIP", "LEFT_WRIST", "RIGHT_WRIST",
-        "LEFT_ANKLE", "RIGHT_ANKLE", "LEFT_KNEE", "RIGHT_KNEE"
+        "LEFT_KNEE", "RIGHT_KNEE", "LEFT_ANKLE", "RIGHT_ANKLE"
     ]
     if not all(visible(landmarks[KEYPOINTS[k]]) for k in required):
-        return {
-            "near_ankles": False,
-            "near_hips": False,
-            "hips_below_knees": False
-        }
+        return None
 
-    # Averages
-    avg_hand_y = average_y(landmarks[KEYPOINTS["LEFT_WRIST"]], landmarks[KEYPOINTS["RIGHT_WRIST"]], h)
-    avg_hip_y = average_y(landmarks[KEYPOINTS["LEFT_HIP"]], landmarks[KEYPOINTS["RIGHT_HIP"]], h)
-    avg_ankle_y = average_y(landmarks[KEYPOINTS["LEFT_ANKLE"]], landmarks[KEYPOINTS["RIGHT_ANKLE"]], h)
-    avg_knee_y = average_y(landmarks[KEYPOINTS["LEFT_KNEE"]], landmarks[KEYPOINTS["RIGHT_KNEE"]], h)
+    # Y positions
+    hip_y = average_y(landmarks[KEYPOINTS["LEFT_HIP"]], landmarks[KEYPOINTS["RIGHT_HIP"]], h)
+    knee_y = average_y(landmarks[KEYPOINTS["LEFT_KNEE"]], landmarks[KEYPOINTS["RIGHT_KNEE"]], h)
+    wrist_y = average_y(landmarks[KEYPOINTS["LEFT_WRIST"]], landmarks[KEYPOINTS["RIGHT_WRIST"]], h)
+    ankle_y = average_y(landmarks[KEYPOINTS["LEFT_ANKLE"]], landmarks[KEYPOINTS["RIGHT_ANKLE"]], h)
 
-    # Criteria
-    hand_near_ankles = abs(avg_hand_y - avg_ankle_y) < 80
-    hand_near_hips = abs(avg_hand_y - avg_hip_y) < 60
-    hips_lower_than_knees = avg_hip_y > avg_knee_y  # you bent over enough
+    # Status flags
+    hips_below_knees = hip_y > knee_y
+    hands_near_ankles = abs(wrist_y - ankle_y) < 80
+    hands_near_hips = abs(wrist_y - hip_y) < 60
+    arms_up = wrist_y < knee_y  # for squat
 
     return {
-        "near_ankles": hand_near_ankles,
-        "near_hips": hand_near_hips,
-        "hips_below_knees": hips_lower_than_knees
+        "hips_below_knees": hips_below_knees,
+        "hands_near_ankles": hands_near_ankles,
+        "hands_near_hips": hands_near_hips,
+        "arms_up": arms_up
     }
 
 # === Webcam Setup ===
@@ -84,23 +82,34 @@ while cap.isOpened():
     if results.pose_landmarks:
         h, w, _ = frame.shape
         landmarks = results.pose_landmarks.landmark
+        status = get_pose_status(landmarks, h)
 
-        # === Deadlift Logic ===
-        phase = detect_deadlift_status(landmarks, h)
+        if status:
+            # === DEADLIFT STATE MACHINE ===
+            if rep_state["DEADLIFT"] == "WAITING_DOWN":
+                if status["hands_near_ankles"] and status["hips_below_knees"]:
+                    hit_bottom["DEADLIFT"] = True
+                    rep_state["DEADLIFT"] = "WAITING_UP"
 
-        # State machine with bottom-out check
-        if rep_state == "WAITING_DOWN":
-            if phase["near_ankles"] and phase["hips_below_knees"]:
-                hit_bottom = True
-                rep_state = "WAITING_UP"
+            elif rep_state["DEADLIFT"] == "WAITING_UP":
+                if hit_bottom["DEADLIFT"] and status["hands_near_hips"]:
+                    rep_count["DEADLIFT"] += 1
+                    hit_bottom["DEADLIFT"] = False
+                    rep_state["DEADLIFT"] = "WAITING_DOWN"
 
-        elif rep_state == "WAITING_UP":
-            if hit_bottom and phase["near_hips"]:
-                rep_count += 1
-                hit_bottom = False
-                rep_state = "WAITING_DOWN"
+            # === SQUAT STATE MACHINE ===
+            if rep_state["SQUAT"] == "WAITING_DOWN":
+                if status["hips_below_knees"] and status["arms_up"]:
+                    hit_bottom["SQUAT"] = True
+                    rep_state["SQUAT"] = "WAITING_UP"
 
-        # === Draw Landmarks ===
+            elif rep_state["SQUAT"] == "WAITING_UP":
+                if hit_bottom["SQUAT"] and not status["hips_below_knees"]:
+                    rep_count["SQUAT"] += 1
+                    hit_bottom["SQUAT"] = False
+                    rep_state["SQUAT"] = "WAITING_DOWN"
+
+        # === Draw Skeleton and Info ===
         mp_drawing.draw_landmarks(
             frame,
             results.pose_landmarks,
@@ -110,15 +119,16 @@ while cap.isOpened():
         )
 
         if CONFIG["show_labels"]:
-            label = f"State: {rep_state.replace('_', ' ').title()}"
-            if hit_bottom:
-                label += " (Bottom ✔)"
-            cv2.putText(frame, label, (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2)
+            label_dl = f"Deadlift: {rep_state['DEADLIFT']} {'✔' if hit_bottom['DEADLIFT'] else ''}"
+            label_sq = f"Squat: {rep_state['SQUAT']} {'✔' if hit_bottom['SQUAT'] else ''}"
+            cv2.putText(frame, label_dl, (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+            cv2.putText(frame, label_sq, (30, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 180, 255), 2)
 
         if CONFIG["show_reps"]:
-            cv2.putText(frame, f"Deadlift Reps: {rep_count}", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 100), 2)
+            cv2.putText(frame, f"Deadlift Reps: {rep_count['DEADLIFT']}", (30, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 100), 2)
+            cv2.putText(frame, f"Squat Reps: {rep_count['SQUAT']}", (30, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 100), 2)
 
-    cv2.imshow("Deadlift Tracker (Stable & Accurate)", frame)
+    cv2.imshow("Deadlift + Squat Tracker", frame)
 
     if cv2.waitKey(5) & 0xFF == ord('q'):
         break
