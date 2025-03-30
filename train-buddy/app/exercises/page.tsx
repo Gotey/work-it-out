@@ -1,29 +1,126 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Image from "next/image"
-import Link from "next/link"
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from "next/image";
+import Link from "next/link";
 
 const allExercises = [
-  { id: 1, name: "Push-ups", category: "upper", equipment: "bodyweight", gif: "/exercises/pushup.gif" },
-  { id: 2, name: "Dumbbell Bench Press", category: "upper", equipment: "dumbbell", gif: "/exercises/bench-press.gif" },
-  { id: 3, name: "Shoulder Press", category: "upper", equipment: "dumbbell", gif: "/exercises/shoulder-press.gif" },
-  { id: 4, name: "Tricep Dips", category: "upper", equipment: "bodyweight", gif: "/exercises/tricep-dips.gif" },
-  { id: 5, name: "Lateral Raises", category: "upper", equipment: "dumbbell", gif: "/exercises/lateral-raises.gif" },
-  { id: 6, name: "Squats", category: "lower", equipment: "bodyweight", gif: "/exercises/squat.gif" },
-  { id: 7, name: "Lunges", category: "lower", equipment: "bodyweight", gif: "/exercises/lunge.gif" },
-  { id: 8, name: "Plank", category: "core", equipment: "bodyweight", gif: "/exercises/plank.gif" },
-]
+  {
+    id: 1,
+    name: "Push-ups",
+    category: "upper",
+    equipment: "bodyweight",
+    gif: "/exercises/pushup.gif",
+  },
+  {
+    id: 2,
+    name: "Bench Press",
+    category: "upper",
+    equipment: "dumbbell",
+    gif: "/exercises/bench_press.gif",
+  },
+  {
+    id: 3,
+    name: "Shoulder Press",
+    category: "upper",
+    equipment: "dumbbell",
+    gif: "/exercises/shoulder_press.gif",
+  },
+  {
+    id: 4,
+    name: "Tricep Pulldowns",
+    category: "upper",
+    equipment: "machine",
+    gif: "/exercises/tricep_pulldown.gif",
+  },
+  {
+    id: 5,
+    name: "Lateral Raises",
+    category: "upper",
+    equipment: "dumbbell",
+    gif: "/exercises/lat_raises.gif",
+  },
+  {
+    id: 6,
+    name: "Squats",
+    category: "lower",
+    equipment: "bodyweight",
+    gif: "/exercises/squat.gif",
+  },
+  {
+    id: 7,
+    name: "Lunges",
+    category: "lower",
+    equipment: "bodyweight",
+    gif: "/exercises/lunges.gif",
+  },
+  {
+    id: 8,
+    name: "Crunches",
+    category: "core",
+    equipment: "bodyweight",
+    gif: "/exercises/crunches.gif",
+  },
+  {
+    id: 9,
+    name: "Hammer Curl",
+    category: "upper",
+    equipment: "dumbbel",
+    gif: "/exercises/hammer_curl.gif",
+  },
+  {
+    id: 10,
+    name: "Leg Raises",
+    category: "core",
+    equipment: "bodyweight",
+    gif: "/exercises/leg_raises.gif",
+  },
+  {
+    id: 11,
+    name: "Deadlifts",
+    category: "lower",
+    equipment: "barbell",
+    gif: "/exercises/deadlift.gif",
+  },
+  {
+    id: 12,
+    name: "Incline Bench Press",
+    category: "upper",
+    equipment: "barbell",
+    gif: "/exercises/incline_bench.gif",
+  },
+  {
+    id: 13,
+    name: "Bicep Curls",
+    category: "upper",
+    equipment: "dumbbell",
+    gif: "/exercises/bicep_curl.gif",
+  },
+  {
+    id: 14,
+    name: "Pull-ups",
+    category: "upper",
+    equipment: "bodyweight",
+    gif: "/exercises/pullups.gif",
+  },
+  {
+    id: 15,
+    name: "Lat Pulldown",
+    category: "core",
+    equipment: "bodyweight",
+    gif: "/exercises/lat_pulldown.gif",
+  },
+];
 
 export default function ExercisesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
 
   const filteredExercises = allExercises.filter((exercise) =>
-    exercise.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+    exercise.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="container max-w-md mx-auto p-4">
@@ -85,7 +182,7 @@ export default function ExercisesPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 function ExerciseCard({ exercise }: { exercise: any }) {
@@ -94,7 +191,12 @@ function ExerciseCard({ exercise }: { exercise: any }) {
       <Card className="overflow-hidden hover:bg-muted/50 transition-colors">
         <CardContent className="p-0">
           <div className="relative h-40 w-full">
-            <Image src={exercise.gif || "/placeholder.svg"} alt={exercise.name} fill className="object-cover" />
+            <Image
+              src={exercise.gif || "/placeholder.svg"}
+              alt={exercise.name}
+              fill
+              className="object-cover"
+            />
           </div>
           <div className="p-4">
             <h3 className="font-medium">{exercise.name}</h3>
@@ -110,6 +212,5 @@ function ExerciseCard({ exercise }: { exercise: any }) {
         </CardContent>
       </Card>
     </Link>
-  )
+  );
 }
-

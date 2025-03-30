@@ -32,16 +32,17 @@ def generate_workouts(user):
     try:
         plan = json.loads(content)
     except json.JSONDecodeError:
-        # Always log the faulty content for inspection
-        print("\n⚠️ GPT returned malformed JSON. Here is the content:\n", content)
-        raise Exception("GPT did not return valid JSON. See server logs for details.")
+        raise Exception("GPT did not return valid JSON")
 
-    # Validate basic structure
-    if not isinstance(plan, list):
-        raise Exception("Expected a list of workouts but got something else.")
+    # Inject GIFs
+    for workout in plan:
+        for exercise in workout["exercises"]:
+            ex_name = exercise["name"]
+            if ex_name in exercise_db:
+                exercise["gif"] = exercise_db[ex_name].get("gif", "")
 
     schedule = [{"day": f"Day {i+1}", "workout_id": i+1} for i in range(len(plan))]
-    workouts = [{"id": i+1, "name": w.get("day_name", f"Day {i+1}"), "exercises": w.get("exercises", [])} for i, w in enumerate(plan)]
+    workouts = [{"id": i+1, "name": w["day_name"], "exercises": w["exercises"]} for i, w in enumerate(plan)]
 
     return schedule, workouts
 

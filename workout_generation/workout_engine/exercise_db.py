@@ -1,34 +1,17 @@
 exercise_db = {
-    "legs": [
-        {"name": "Squat", "type": "compound"},
-        {"name": "Deadlift", "type": "compound"},
-        {"name": "Lunges", "type": "accessory"}
-    ],
-    "chest": [
-        {"name": "Bench Press", "type": "compound"},
-        {"name": "Incline Bench Press", "type": "compound"},
-        {"name": "Pushups", "type": "bodyweight"}
-    ],
-    "back": [
-        {"name": "Pullups", "type": "bodyweight"},
-        {"name": "Lat Pulldowns", "type": "machine"}
-    ],
-    "shoulders": [
-        {"name": "Shoulder Press", "type": "compound"},
-        {"name": "Lateral Raises", "type": "accessory"}
-    ],
-    "core": [
-        {"name": "Crunches", "type": "bodyweight"},
-        {"name": "Leg Raises", "type": "bodyweight"}
-    ],
-    "biceps": [
-        {"name": "Bicep Curl", "type": "accessory"},
-        {"name": "Hammer Curl", "type": "accessory"}
-    ],
-    "triceps": [
-        {"name": "Tricep Pulldown", "type": "machine"}
-    ],
-    "cardio": [
-        {"name": "Running", "type": "cardio"},
-    ]
+    "Squat": {"muscle_group": "legs", "gif": "squat.gif"},
+    "Bench Press": {"muscle_group": "push", "gif": "bench_press.gif"},
+    "Deadlift": {"muscle_group": "legs", "gif": "deadlift.gif"},
+    "Pushups": {"muscle_group": "push", "gif": "pushup.gif"},
+    "Crunches": {"muscle_group": "core", "gif": "crunches.gif"},
+    "Leg Raises": {"muscle_group": "core", "gif": "leg_raises.gif"},
+    "Pullups": {"muscle_group": "pull", "gif": "pullups.gif"},
+    "Lat Pulldowns": {"muscle_group": "pull", "gif": "lat_pulldown.gif"},
+    "Shoulder Press": {"muscle_group": "push", "gif": "shoulder_press.gif"},
+    "Lateral Raises": {"muscle_group": "push", "gif": "lat_raises.gif"},
+    "Lunges": {"muscle_group": "legs", "gif": "lunges.gif"},
+    "Incline Bench Press": {"muscle_group": "push", "gif": "incline_bench.gif"},
+    "Bicep Curl": {"muscle_group": "pull", "gif": "bicep_curl.gif"},
+    "Hammer Curl": {"muscle_group": "pull", "gif": "hammer_curl.gif"},
+    "Tricep Pulldown": {"muscle_group": "push", "gif": "tricep_pulldown.gif"}
 }

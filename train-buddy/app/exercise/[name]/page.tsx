@@ -5,15 +5,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function ExercisePage() {
   const params = useParams();
   const exerciseName = decodeURIComponent(params.name as string);
 
   const [exercise, setExercise] = useState<any | null>(null);
-  const [currentSet, setCurrentSet] = useState(1);
-  const [currentRep, setCurrentRep] = useState(0);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const plan = JSON.parse(localStorage.getItem("workoutPlan") || "{}");
@@ -22,6 +21,10 @@ export default function ExercisePage() {
       ?.find((e: any) => e.name === exerciseName);
     if (found) setExercise(found);
   }, [exerciseName]);
+
+  const [currentSet, setCurrentSet] = useState(1);
+  const [currentRep, setCurrentRep] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (exercise) {
@@ -35,11 +38,24 @@ export default function ExercisePage() {
 
   return (
     <div className="container max-w-md mx-auto p-4">
+      <Link href="/week1">
+        <Button variant="outline" className="mb-4">
+          ← Back to Day View
+        </Button>
+      </Link>
       <Card className="relative overflow-hidden">
-        <div
-          className="absolute bottom-0 left-0 h-1 bg-green-500 transition-all duration-300 ease-in-out"
-          style={{ width: `${progress}%` }}
-        ></div>
+        {/* Exercise GIF */}
+        <div className="relative aspect-video w-full">
+          <Image
+            src={
+              exercise.gif ? `/exercises/${exercise.gif}` : "/placeholder.svg"
+            }
+            alt={exercise.name}
+            fill
+            className="object-cover rounded-t-md"
+          />
+        </div>
+
         <CardContent className="p-4">
           <h1 className="text-xl font-bold mb-2">{exercise.name}</h1>
 

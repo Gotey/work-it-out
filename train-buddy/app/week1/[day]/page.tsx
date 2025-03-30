@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function DayPage() {
   const params = useParams();
@@ -23,6 +24,11 @@ export default function DayPage() {
 
   return (
     <div className="container max-w-md mx-auto p-4">
+      <Link href="/week1">
+        <Button variant="outline" className="mb-4">
+          ← Back to Week Overview
+        </Button>
+      </Link>
       <h1 className="text-xl font-bold mb-4">{workout.day_name}</h1>
 
       <motion.div className="grid gap-4" initial="hidden" animate="show">
