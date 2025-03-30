@@ -1,7 +1,9 @@
 import cv2
 import mediapipe as mp
 import math
+import os
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Only show errors, no warnings or info
 # === CONFIGURATION ===
 CONFIG = {
     "show_labels": True,
