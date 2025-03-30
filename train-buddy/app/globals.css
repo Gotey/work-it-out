@@ -59,3 +59,9 @@
   }
 }
 
+.exercise-card {
+  position: relative;
+  width: 115%;
+  min-height: 500px; /* slightly larger than before */
+  aspect-ratio: 16 / 9;
+}
