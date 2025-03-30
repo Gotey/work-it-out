@@ -1,13 +1,11 @@
 import cv2
 import mediapipe as mp
-import math
 from collections import deque
 
 # === CONFIGURATION ===
 CONFIG = {
     "show_labels": True,
     "min_visibility": 0.5,
-    "pose_smoothing_frames": 5,
     "show_reps": True
 }
 
@@ -22,12 +20,13 @@ KEYPOINTS = {
     "LEFT_ELBOW": 13, "RIGHT_ELBOW": 14,
     "LEFT_WRIST": 15, "RIGHT_WRIST": 16,
     "LEFT_HIP": 23, "RIGHT_HIP": 24,
-    "LEFT_KNEE": 25, "RIGHT_KNEE": 26
+    "LEFT_KNEE": 25, "RIGHT_KNEE": 26,
+    "LEFT_ANKLE": 27, "RIGHT_ANKLE": 28
 }
 
-pose_history = deque(maxlen=CONFIG["pose_smoothing_frames"])
 rep_count = 0
-last_pose_state = "STANDING"
+rep_state = "WAITING_DOWN"  # Possible values: WAITING_DOWN, WAITING_UP
+hit_bottom = False
 
 # === Utility Functions ===
 def get_y(lm, h):
@@ -36,26 +35,38 @@ def get_y(lm, h):
 def visible(lm):
     return lm.visibility >= CONFIG["min_visibility"]
 
-# === Deadlift Classifier ===
-def classify_deadlift(landmarks, h):
-    required = ["LEFT_HIP", "RIGHT_HIP", "LEFT_KNEE", "RIGHT_KNEE", "LEFT_SHOULDER", "RIGHT_SHOULDER", "LEFT_WRIST", "RIGHT_WRIST"]
+def average_y(lm1, lm2, h):
+    return (get_y(lm1, h) + get_y(lm2, h)) / 2
+
+# === Deadlift Phase Detection ===
+def detect_deadlift_status(landmarks, h):
+    required = [
+        "LEFT_HIP", "RIGHT_HIP", "LEFT_WRIST", "RIGHT_WRIST",
+        "LEFT_ANKLE", "RIGHT_ANKLE", "LEFT_KNEE", "RIGHT_KNEE"
+    ]
     if not all(visible(landmarks[KEYPOINTS[k]]) for k in required):
-        return "UNKNOWN"
+        return {
+            "near_ankles": False,
+            "near_hips": False,
+            "hips_below_knees": False
+        }
 
-    lh_y = get_y(landmarks[KEYPOINTS["LEFT_HIP"]], h)
-    rh_y = get_y(landmarks[KEYPOINTS["RIGHT_HIP"]], h)
-    ls_y = get_y(landmarks[KEYPOINTS["LEFT_SHOULDER"]], h)
-    rs_y = get_y(landmarks[KEYPOINTS["RIGHT_SHOULDER"]], h)
-    lw_y = get_y(landmarks[KEYPOINTS["LEFT_WRIST"]], h)
-    rw_y = get_y(landmarks[KEYPOINTS["RIGHT_WRIST"]], h)
+    # Averages
+    avg_hand_y = average_y(landmarks[KEYPOINTS["LEFT_WRIST"]], landmarks[KEYPOINTS["RIGHT_WRIST"]], h)
+    avg_hip_y = average_y(landmarks[KEYPOINTS["LEFT_HIP"]], landmarks[KEYPOINTS["RIGHT_HIP"]], h)
+    avg_ankle_y = average_y(landmarks[KEYPOINTS["LEFT_ANKLE"]], landmarks[KEYPOINTS["RIGHT_ANKLE"]], h)
+    avg_knee_y = average_y(landmarks[KEYPOINTS["LEFT_KNEE"]], landmarks[KEYPOINTS["RIGHT_KNEE"]], h)
 
-    hips_below_shoulders = lh_y > ls_y and rh_y > rs_y
-    arms_down = lw_y > lh_y and rw_y > rh_y
+    # Criteria
+    hand_near_ankles = abs(avg_hand_y - avg_ankle_y) < 80
+    hand_near_hips = abs(avg_hand_y - avg_hip_y) < 60
+    hips_lower_than_knees = avg_hip_y > avg_knee_y  # you bent over enough
 
-    if hips_below_shoulders and arms_down:
-        return "DEADLIFT"
-    else:
-        return "STANDING"
+    return {
+        "near_ankles": hand_near_ankles,
+        "near_hips": hand_near_hips,
+        "hips_below_knees": hips_lower_than_knees
+    }
 
 # === Webcam Setup ===
 
@@ -74,18 +85,22 @@ while cap.isOpened():
         h, w, _ = frame.shape
         landmarks = results.pose_landmarks.landmark
 
-        # === Classify & Smooth Pose ===
-        current_class = classify_deadlift(landmarks, h)
-        pose_history.append(current_class)
-        smoothed_pose = max(set(pose_history), key=pose_history.count)
+        # === Deadlift Logic ===
+        phase = detect_deadlift_status(landmarks, h)
 
-        # === Rep Count (DEADLIFT → STANDING)
-        if smoothed_pose != last_pose_state:
-            if last_pose_state == "DEADLIFT" and smoothed_pose == "STANDING":
+        # State machine with bottom-out check
+        if rep_state == "WAITING_DOWN":
+            if phase["near_ankles"] and phase["hips_below_knees"]:
+                hit_bottom = True
+                rep_state = "WAITING_UP"
+
+        elif rep_state == "WAITING_UP":
+            if hit_bottom and phase["near_hips"]:
                 rep_count += 1
-            last_pose_state = smoothed_pose
+                hit_bottom = False
+                rep_state = "WAITING_DOWN"
 
-        # === Draw Landmarks
+        # === Draw Landmarks ===
         mp_drawing.draw_landmarks(
             frame,
             results.pose_landmarks,
@@ -95,12 +110,15 @@ while cap.isOpened():
         )
 
         if CONFIG["show_labels"]:
-            cv2.putText(frame, f"Pose: {smoothed_pose}", (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 2)
+            label = f"State: {rep_state.replace('_', ' ').title()}"
+            if hit_bottom:
+                label += " (Bottom ✔)"
+            cv2.putText(frame, label, (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2)
 
         if CONFIG["show_reps"]:
             cv2.putText(frame, f"Deadlift Reps: {rep_count}", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 100), 2)
 
-    cv2.imshow("Deadlift Tracker", frame)
+    cv2.imshow("Deadlift Tracker (Stable & Accurate)", frame)
 
     if cv2.waitKey(5) & 0xFF == ord('q'):
         break
