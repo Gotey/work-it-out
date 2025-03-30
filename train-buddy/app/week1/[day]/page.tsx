@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { slugify } from "@/lib/slugify";
 
 export default function DayPage() {
   const params = useParams();
@@ -34,7 +35,7 @@ export default function DayPage() {
       <motion.div className="grid gap-4" initial="hidden" animate="show">
         {workout.exercises.map((exercise: any, i: number) => (
           <motion.div key={i}>
-            <Link href={`/exercise/${encodeURIComponent(exercise.name)}`}>
+            <Link href={`/week1/${params.day}/${slugify(exercise.name)}`}>
               <Card className="hover:bg-muted/50 transition-colors">
                 <CardContent className="p-4 flex justify-between items-center">
                   <div>
