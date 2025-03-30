@@ -1,0 +1,9 @@
+<h2>Your Weekly Workout Schedule</h2>
+<ul>
+    {% for day in schedule %}
+        <li>
+            <strong>{{ day.day }}</strong> —
+            <a href="{{ url_for('day_view', day_id=day.workout_id) }}">View Exercises</a>
+        </li>
+    {% endfor %}
+</ul>
