@@ -8,8 +8,8 @@ CONFIG = {
     "min_visibility": 0.5,
     "show_reps": True,
     "wrist_alignment_tolerance": 10,   # wrists must be within 10 pixels of each other
-    "shoulder_press_margin": 120,      # how much higher the wrist must go to count as 'pressed'
-    "max_arm_angle": 125               # max angle allowed when arms are extended (in degrees)
+    "shoulder_press_margin": 105,      # how much higher the wrist must go to count as 'pressed'
+    "max_arm_angle": 120               # max angle allowed when arms are extended (in degrees)
 }
 
 # === Setup Pose Detection ===
@@ -154,8 +154,8 @@ while cap.isOpened():
             label = f"Shoulder Press: {rep_state} | Angle: {int(phase['avg_angle'])}°"
             correct_label = "Make sure your Arms are DIRECTLY extended up, not outwards!"
             cv2.putText(frame, label, (30, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, label_color, 2)
-            if phase["incorrect_form"]:
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, label_color, 2)
+            if not phase["correct_form"] and rep_state == "INCORRECT FORM!":
                 cv2.putText(frame, correct_label, (30, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         if CONFIG["show_reps"]:
