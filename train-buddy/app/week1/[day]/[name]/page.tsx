@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { slugify } from "@/lib/slugify";
+import {
+  markExerciseCompleted,
+  isExerciseCompleted,
+  isDayCompleted,
+} from "@/lib/progress";
+import { slugify } from "@/lib/slugify"; // ← make sure it's imported
 
 export default function ExercisePage() {
   const { day, name } = useParams() as { day: string; name: string };
@@ -22,14 +27,11 @@ export default function ExercisePage() {
   useEffect(() => {
     const plan = JSON.parse(localStorage.getItem("workoutPlan") || "{}");
     const found = plan.workouts?.[parseInt(day) - 1]?.exercises?.find(
-      (e: any) => slugify(e.name) === name
+      (e: any) => slugify(e.name) === decodeURIComponent(name)
     );
     if (found) setExercise(found);
 
-    const completed = JSON.parse(
-      localStorage.getItem("completedExercises") || "{}"
-    );
-    setIsCompleted(completed[day]?.includes(name));
+    setIsCompleted(isExerciseCompleted(Number(day), name));
   }, [day, name]);
 
   useEffect(() => {
@@ -40,14 +42,14 @@ export default function ExercisePage() {
     }
   }, [currentSet, currentRep, exercise]);
 
-  const markCompleted = () => {
-    const completed = JSON.parse(
-      localStorage.getItem("completedExercises") || "{}"
-    );
-    if (!completed[day]) completed[day] = [];
-    if (!completed[day].includes(name)) completed[day].push(name);
-    localStorage.setItem("completedExercises", JSON.stringify(completed));
-    router.push(`/week1/${day}`);
+  const handleComplete = () => {
+    const dayIndex = Number(day);
+    markExerciseCompleted(dayIndex, name);
+    if (isDayCompleted(dayIndex)) {
+      router.push("/success");
+    } else {
+      router.push(`/week1/${day}`);
+    }
   };
 
   if (!exercise) return <div>Exercise not found</div>;
@@ -55,9 +57,9 @@ export default function ExercisePage() {
   return (
     <div className="container max-w-md mx-auto p-4">
       <Link href={`/week1/${day}`}>
-        {" "}
-        <Button variant="outline">← Back to Day</Button>{" "}
+        <Button variant="outline">← Back to Day</Button>
       </Link>
+
       <Card className="relative overflow-hidden">
         <div className="relative aspect-video w-full">
           <Image
@@ -84,6 +86,7 @@ export default function ExercisePage() {
                     {currentSet} / {exercise.sets}
                   </div>
                 </div>
+
                 <div className="flex items-center space-x-4">
                   <Button
                     variant="outline"
@@ -126,10 +129,9 @@ export default function ExercisePage() {
                       <Button
                         className="w-full"
                         size="lg"
-                        onClick={markCompleted}
+                        onClick={handleComplete}
                       >
-                        {" "}
-                        Exercise Completed{" "}
+                        Exercise Completed
                       </Button>
                     </motion.div>
                   )}
