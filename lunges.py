@@ -6,7 +6,8 @@ import math
 CONFIG = {
     "show_labels": True,
     "min_visibility": 0.5,
-    "show_reps": True
+    "show_reps": True,
+    "knee_ankle_threshold": 40  # threshold for how far knee can go ahead of ankle (in pixels)
 }
 
 # === Setup Pose Detection ===
@@ -41,29 +42,40 @@ def calc_angle(a, b, c):
     angle = math.acos(dot / (mag_ba * mag_bc + 1e-6))
     return math.degrees(angle)
 
-# === Lunge Detection ===
+# === Lunge Detection with Automatic Front Leg ===
 def detect_lunge_phase(landmarks, h, w):
-    required = ["LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE"]
-    if not all(visible(landmarks[KEYPOINTS[k]]) for k in required):
-        return {
-            "deep_lunge": False,
-            "recovered": False,
-            "knee_angle": None
-        }
+    if not all(visible(landmarks[KEYPOINTS[k]]) for k in ["LEFT_KNEE", "RIGHT_KNEE"]):
+        return None
 
-    hip = get_point(landmarks[KEYPOINTS["LEFT_HIP"]], h, w)
-    knee = get_point(landmarks[KEYPOINTS["LEFT_KNEE"]], h, w)
-    ankle = get_point(landmarks[KEYPOINTS["LEFT_ANKLE"]], h, w)
+    # Decide which knee is more forward (closer to camera in X)
+    left_knee_x = landmarks[KEYPOINTS["LEFT_KNEE"]].x
+    right_knee_x = landmarks[KEYPOINTS["RIGHT_KNEE"]].x
 
-    angle = calc_angle(hip, knee, ankle)
+    if left_knee_x < right_knee_x:
+        # Left leg is leading
+        front_knee = get_point(landmarks[KEYPOINTS["LEFT_KNEE"]], h, w)
+        front_ankle = get_point(landmarks[KEYPOINTS["LEFT_ANKLE"]], h, w)
+        front_hip = get_point(landmarks[KEYPOINTS["LEFT_HIP"]], h, w)
+    else:
+        # Right leg is leading
+        front_knee = get_point(landmarks[KEYPOINTS["RIGHT_KNEE"]], h, w)
+        front_ankle = get_point(landmarks[KEYPOINTS["RIGHT_ANKLE"]], h, w)
+        front_hip = get_point(landmarks[KEYPOINTS["RIGHT_HIP"]], h, w)
 
+    # === Phase detection ===
+    angle = calc_angle(front_hip, front_knee, front_ankle)
     deep_lunge = angle < 100
     recovered = angle > 160
+
+    # === Incorrect form check ===
+    knee_ahead = abs(front_knee[0] - front_ankle[0]) > CONFIG["knee_ankle_threshold"]
+    incorrect_form = knee_ahead
 
     return {
         "deep_lunge": deep_lunge,
         "recovered": recovered,
-        "knee_angle": int(angle)
+        "knee_angle": int(angle),
+        "incorrect_form": incorrect_form
     }
 
 # === Webcam Setup ===
@@ -85,16 +97,24 @@ while cap.isOpened():
 
         phase = detect_lunge_phase(landmarks, h, w)
 
-        if rep_state == "WAITING_DOWN":
-            if phase["deep_lunge"]:
-                hit_bottom = True
-                rep_state = "WAITING_UP"
+        if phase:
+            if rep_state == "WAITING_DOWN":
+                if phase["deep_lunge"]:
+                    hit_bottom = True
+                    rep_state = "WAITING_UP"
 
-        elif rep_state == "WAITING_UP":
-            if hit_bottom and phase["recovered"]:
-                rep_count += 1
-                hit_bottom = False
-                rep_state = "WAITING_DOWN"
+            elif rep_state == "WAITING_UP":
+                if hit_bottom and phase["recovered"]:
+                    if not phase["incorrect_form"]:
+                        rep_count += 1
+                        rep_state = "WAITING_DOWN"
+                    else:
+                        rep_state = "INCORRECT FORM!"
+                    hit_bottom = False
+
+            elif rep_state == "INCORRECT FORM!":
+                if phase["recovered"]:
+                    rep_state = "WAITING_DOWN"
 
         # === Draw Landmarks ===
         mp_drawing.draw_landmarks(
@@ -105,14 +125,20 @@ while cap.isOpened():
             mp_drawing.DrawingSpec(color=(255, 255, 255), thickness=3)
         )
 
-        if CONFIG["show_labels"]:
+        # === Display Info ===
+        if CONFIG["show_labels"] and phase:
+            label_color = (0, 0, 255) if phase["incorrect_form"] else (0, 255, 255)
             label = f"Lunge: {rep_state.replace('_', ' ').title()} | Angle: {phase['knee_angle']}"
+            correct_label = "Make sure your knee doesn't go too far ahead of your ankle!"
             if hit_bottom:
                 label += " (Deep ✔)"
-            cv2.putText(frame, label, (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+            cv2.putText(frame, label, (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, label_color, 2)
+            if phase["incorrect_form"]:
+                cv2.putText(frame, correct_label, (30, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         if CONFIG["show_reps"]:
-            cv2.putText(frame, f"Lunge Reps: {rep_count}", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 100), 2)
+            cv2.putText(frame, f"Lunge Reps: {rep_count}", (30, 80),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 100), 2)
 
     cv2.imshow("Lunge Tracker", frame)
 

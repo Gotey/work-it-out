@@ -4,7 +4,6 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Only show errors, no warnings or info
 
-
 # === CONFIGURATION ===
 CONFIG = {
     "show_labels": True,
@@ -40,9 +39,11 @@ def visible(lm):
 def average_y(lm1, lm2, h):
     return (get_y(lm1, h) + get_y(lm2, h)) / 2
 
-# === Deadlift Detection ===
+# === Deadlift Detection (Lenient Thresholds + Feet Check) ===
 def detect_deadlift_status(landmarks, h):
-    if not all(visible(landmarks[KEYPOINTS[k]]) for k in ["LEFT_HIP", "RIGHT_HIP", "LEFT_WRIST", "RIGHT_WRIST", "LEFT_KNEE", "RIGHT_KNEE", "LEFT_ANKLE", "RIGHT_ANKLE"]):
+    required_keys = ["LEFT_HIP", "RIGHT_HIP", "LEFT_WRIST", "RIGHT_WRIST", 
+                     "LEFT_KNEE", "RIGHT_KNEE", "LEFT_ANKLE", "RIGHT_ANKLE"]
+    if not all(visible(landmarks[KEYPOINTS[k]]) for k in required_keys):
         return None
 
     hip_y = average_y(landmarks[KEYPOINTS["LEFT_HIP"]], landmarks[KEYPOINTS["RIGHT_HIP"]], h)
@@ -50,14 +51,24 @@ def detect_deadlift_status(landmarks, h):
     wrist_y = average_y(landmarks[KEYPOINTS["LEFT_WRIST"]], landmarks[KEYPOINTS["RIGHT_WRIST"]], h)
     ankle_y = average_y(landmarks[KEYPOINTS["LEFT_ANKLE"]], landmarks[KEYPOINTS["RIGHT_ANKLE"]], h)
 
-    hands_near_ankles = abs(wrist_y - ankle_y) < 80
-    hips_below_knees = hip_y > knee_y
-    hands_near_hips = abs(wrist_y - hip_y) < 60
+    # Relaxed thresholds:
+    hands_near_ankles = abs(wrist_y - ankle_y) < 150
+    hips_below_knees = abs(knee_y - hip_y) < 70
+    hands_near_hips = abs(wrist_y - hip_y) < 80
 
-    return {"hands_near_ankles": hands_near_ankles, "hips_below_knees": hips_below_knees, "hands_near_hips": hands_near_hips}
+    # Feet should remain static: both ankles should be at nearly the same vertical position.
+    left_ankle_y = get_y(landmarks[KEYPOINTS["LEFT_ANKLE"]], h)
+    right_ankle_y = get_y(landmarks[KEYPOINTS["RIGHT_ANKLE"]], h)
+    feet_static = abs(left_ankle_y - right_ankle_y) < 0
+
+    return {
+        "hands_near_ankles": hands_near_ankles,
+        "hips_below_knees": hips_below_knees,
+        "hands_near_hips": hands_near_hips,
+        "feet_static": feet_static
+    }
 
 # === Webcam Setup ===
-
 cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
@@ -75,12 +86,13 @@ while cap.isOpened():
         status = detect_deadlift_status(landmarks, h)
 
         if status:
+            # Only proceed if the feet remain static.
             if rep_state == "WAITING_DOWN":
-                if status["hands_near_ankles"] and status["hips_below_knees"]:
+                if status["hands_near_ankles"] and status["hips_below_knees"] and status["feet_static"]:
                     hit_bottom = True
                     rep_state = "WAITING_UP"
             elif rep_state == "WAITING_UP":
-                if hit_bottom and status["hands_near_hips"]:
+                if hit_bottom and status["hands_near_hips"] and status["feet_static"] and not status["hips_below_knees"]:
                     rep_count += 1
                     hit_bottom = False
                     rep_state = "WAITING_DOWN"
