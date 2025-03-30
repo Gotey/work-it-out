@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ exercise.name }} | {{ day }}</title>
+</head>
+<body>
+    <h2>{{ exercise.name }}</h2>
+    <p>Day: {{ day }}</p>
+    <p>Goal: Complete {{ exercise.sets }} sets of {{ exercise.reps }} reps</p>
+
+    <!-- Future tracking feedback goes here -->
+    <button onclick="startTracking()">Start Body Tracking</button>
+
+    <script>
+    function startTracking() {
+        alert("Body tracking would start here. Placeholder for MediaPipe / OpenPose.");
+    }
+    </script>
+
+    <br><br>
+    <a href="{{ url_for('day_view', day_id=request.view_args.day_id) }}">← Back to Day View</a>
+</body>
+</html>
