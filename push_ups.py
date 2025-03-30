@@ -92,7 +92,7 @@ while cap.isOpened():
 
         # === Display Info ===
         if CONFIG["show_labels"]:
-            label = f"Push-Up: {rep_state.replace('_', ' ').title()}"
+            label = f"Crunch: {rep_state.replace('_', ' ').title()} | Angle: {phase['angle']}°"
             if hit_bottom:
                 label += " (Down ✔)"
             cv2.putText(frame, label, (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2)
