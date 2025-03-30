@@ -75,4 +75,4 @@ work-it-out/
 
 ## 🙌 Credits
 
-Built during HackPSU by Javier Pozo Miranda.
+- Equipo alfa buena maravilla onda dinamita escuadrón lobo
