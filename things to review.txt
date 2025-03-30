@@ -1,0 +1,4 @@
+Things to review:
+1. Add back button from individual exercises back to the "day workout" view. When you hit back it directs to the main page to register for a new workout.
+
+2. Speaking of registering for new workout, once a user logs in once through the main page, they should not go back unless they change it in the settings (which we will NOT implement).
