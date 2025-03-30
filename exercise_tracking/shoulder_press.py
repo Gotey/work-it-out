@@ -155,7 +155,7 @@ while cap.isOpened():
             correct_label = "Make sure your Arms are DIRECTLY extended up, not outwards!"
             cv2.putText(frame, label, (30, 40),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, label_color, 2)
-            if phase["incorrect_form"]:
+            if not phase["correct_form"]:
                 cv2.putText(frame, correct_label, (30, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         if CONFIG["show_reps"]:

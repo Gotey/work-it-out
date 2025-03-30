@@ -1,29 +1,35 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Image from "next/image"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const exercises = [
   { id: 1, name: "Push-ups", gif: "/exercises/pushup.gif" },
   { id: 2, name: "Squats", gif: "/exercises/squat.gif" },
-  { id: 3, name: "Lunges", gif: "/exercises/lunge.gif" },
-  { id: 4, name: "Plank", gif: "/exercises/plank.gif" },
-]
+  { id: 3, name: "Lunges", gif: "/exercises/lunges.gif" },
+  { id: 4, name: "Leg Raises", gif: "/exercises/leg_raises.gif" },
+  { id: 5, name: "Crunches", gif: "/exercises/crunches.gif" },
+  { id: 6, name: "Bicep Curls", gif: "/exercises/bicep_curl.gif" },
+  { id: 7, name: "Tricep Pulldown", gif: "/exercises/tricep_pulldown.gif" },
+  { id: 8, name: "Shoulder Press", gif: "/exercises/shoulder_press.gif" },
+  { id: 9, name: "Bench Press", gif: "/exercises/bench_press.gif" },
+];
 
 export default function ExerciseCarousel() {
-  const [current, setCurrent] = useState(0)
+  const [current, setCurrent] = useState(0);
 
-  const next = () => setCurrent((current + 1) % exercises.length)
-  const prev = () => setCurrent((current - 1 + exercises.length) % exercises.length)
+  const next = () => setCurrent((current + 1) % exercises.length);
+  const prev = () =>
+    setCurrent((current - 1 + exercises.length) % exercises.length);
 
   // Auto-advance carousel
   useEffect(() => {
-    const timer = setTimeout(next, 5000)
-    return () => clearTimeout(timer)
-  }, [current])
+    const timer = setTimeout(next, 5000);
+    return () => clearTimeout(timer);
+  }, [current]);
 
   return (
     <div className="relative w-full">
@@ -36,7 +42,12 @@ export default function ExerciseCarousel() {
             <Card key={exercise.id} className="w-full flex-shrink-0">
               <CardContent className="p-0">
                 <div className="relative aspect-video w-full overflow-hidden rounded-t-lg">
-                  <Image src={exercise.gif || "/placeholder.svg"} alt={exercise.name} fill className="object-cover" />
+                  <Image
+                    src={exercise.gif || "/placeholder.svg"}
+                    alt={exercise.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 <div className="p-4 text-center">
                   <h3 className="font-medium">{exercise.name}</h3>
@@ -73,7 +84,9 @@ export default function ExerciseCarousel() {
             key={index}
             variant="ghost"
             size="icon"
-            className={`h-2 w-2 rounded-full p-0 ${index === current ? "bg-primary" : "bg-muted"}`}
+            className={`h-2 w-2 rounded-full p-0 ${
+              index === current ? "bg-primary" : "bg-muted"
+            }`}
             onClick={() => setCurrent(index)}
           >
             <span className="sr-only">Go to slide {index + 1}</span>
@@ -81,6 +94,5 @@ export default function ExerciseCarousel() {
         ))}
       </div>
     </div>
-  )
+  );
 }
-

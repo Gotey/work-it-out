@@ -4,9 +4,12 @@
 
 @layer base {
   :root {
-
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --header: 356, 100%, 34%;      /* soft blueish */
+    --content: 40 82% 87%;        /* pure white */
+    --footer: 356, 100%, 34%;       /* very light gray */
+    
+    --background: 356, 100%, 34%;
+    --foreground: 356 100% 100%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
@@ -21,7 +24,7 @@
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
+    --border: 214.3 31.8% 0%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
