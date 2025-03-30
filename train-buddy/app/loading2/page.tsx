@@ -21,18 +21,21 @@ export default function Loading2Page() {
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
-    // 🟣 Validate user data
     if (!userData || !userData.name || !userData.goal) {
       alert("Missing user data. Please fill out the form first.");
       router.push("/form");
       return;
     }
 
-    // 🟣 Generate the workout plan automatically on mount
+    // 🟣 Reset progress every time a new workout starts
+    localStorage.removeItem("completedExercises");
+    localStorage.removeItem("workoutDuration");
+
+    // 🟣 Generate the workout plan automatically
     generateWorkoutPlan(userData)
       .then((plan) => {
         localStorage.setItem("workoutPlan", JSON.stringify(plan));
-        // Continue progress bar animation normally
+
         const interval = setInterval(() => {
           setProgress((prev) => {
             if (prev >= 100) {

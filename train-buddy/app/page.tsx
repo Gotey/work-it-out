@@ -4,26 +4,22 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import ExerciseCarousel from "@/components/exercise-carousel";
 
-
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center">
       <div className="container flex flex-col items-center justify-center px-4 py-8 space-y-8">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <Image
-            src="/logo.svg"
+            src="/logo-removebg-preview.png"
             alt="Train Buddy Logo"
-            width={150}
-            height={150}
+            width={600}
+            height={600}
             className="animate-pulse"
             priority
           />
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-            Work It Out
-          </h1>
           <p className="max-w-[42rem] text-muted-foreground sm:text-xl">
             Your personal workout companion. Get fit, stay motivated, and track
-            your progress with Train Buddy.
+            your progress.
           </p>
           <Link href="/loading" className="w-full sm:w-auto">
             <Button size="lg" className="w-full sm:w-auto animate-pulse">
