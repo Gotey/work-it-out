@@ -2,13 +2,12 @@ from flask import Flask, render_template, request, session, redirect, url_for
 from workout_engine.generator import generate_workouts
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key"  # Needed for session handling
+app.secret_key = "super_secret_key"  # In production, load this securely
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # Save user input in session
         session['user'] = {
             'age': request.form['age'],
             'height': request.form['height'],
@@ -18,7 +17,6 @@ def index():
             'days_per_week': int(request.form['days']),
         }
 
-        # Generate workouts + schedule
         session['schedule'], session['workouts'] = generate_workouts(session['user'])
         return redirect(url_for('dashboard'))
 

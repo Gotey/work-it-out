@@ -1,57 +1,80 @@
-import random
+import openai
+import json
+import os
+from dotenv import load_dotenv
 from .exercise_db import exercise_db
 
-def generate_weekly_schedule(days_per_week):
-    if days_per_week == 3:
-        return ["Push", "Pull", "Legs"]
-    elif days_per_week == 4:
-        return ["Upper", "Lower", "Push", "Pull"]
-    elif days_per_week >= 5:
-        return ["Push", "Pull", "Legs", "Upper", "Full Body"]
-    else:
-        return ["Full Body"] * days_per_week
+# Modern API client (this is required now)
+load_dotenv()  # Load environment variables from .env file
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_workouts(user):
-    split = generate_weekly_schedule(user['days_per_week'])
-    workouts = []
+    prompt = build_prompt(user)
 
-    for i, day_type in enumerate(split):
-        workout = {"id": i + 1, "name": f"{day_type} Day", "exercises": []}
+    # Corrected API call for openai>=1.x
+    response = client.chat.completions.create(
+        model="gpt-4-turbo",
+        messages=[
+            {"role": "system", "content": "You are a personal trainer who creates beginner-friendly workout plans."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.5
+    )
 
-        if day_type == "Push":
-            workout["exercises"] += random.sample(exercise_db["chest"], 1)
-            workout["exercises"] += random.sample(exercise_db["shoulders"], 1)
-            workout["exercises"] += random.sample(exercise_db["triceps"], 1)
+    content = response.choices[0].message.content
 
-        elif day_type == "Pull":
-            workout["exercises"] += random.sample(exercise_db["back"], 1)
-            workout["exercises"] += random.sample(exercise_db["biceps"], 1)
-            workout["exercises"] += random.sample(exercise_db["core"], 1)
+    # Handle code block wrapping if GPT returns ```json ... ```
+    if content.startswith("```"):
+        content = content.strip().strip("```json").strip("```")
 
-        elif day_type == "Lower":
-            workout["exercises"] += random.sample(exercise_db["legs"], 2)
-            workout["exercises"] += random.sample(exercise_db["core"], 1)
+    try:
+        plan = json.loads(content)
+    except json.JSONDecodeError:
+        raise Exception("GPT did not return valid JSON.")
 
-        elif day_type == "Upper":
-            workout["exercises"] += random.sample(exercise_db["chest"], 1)
-            workout["exercises"] += random.sample(exercise_db["back"], 1)
-            workout["exercises"] += random.sample(exercise_db["shoulders"], 1)
+    # Build the Flask app-friendly structure
+    schedule = [{"day": f"Day {i+1}", "workout_id": i+1} for i in range(len(plan))]
+    workouts = [{"id": i+1, "name": w["day_name"], "exercises": w["exercises"]} for i, w in enumerate(plan)]
 
-        elif day_type == "Full Body":
-            workout["exercises"] += random.sample(exercise_db["legs"], 1)
-            workout["exercises"] += random.sample(exercise_db["chest"], 1)
-            workout["exercises"] += random.sample(exercise_db["back"], 1)
-            workout["exercises"] += random.sample(exercise_db["core"], 1)
-        
-        elif day_type == "Cardio":
-            workout["exercises"] += random.sample(exercise_db["cardio"], 1)
-
-        # Add default sets and reps
-        for ex in workout["exercises"]:
-            ex["sets"] = 3
-            ex["reps"] = 10
-
-        workouts.append(workout)
-
-    schedule = [{"day": f"Day {i+1}", "workout_id": w["id"]} for i, w in enumerate(workouts)]
     return schedule, workouts
+
+
+def build_prompt(user):
+    # Serialize exercise_db nicely for the prompt
+    exercise_text = json.dumps(exercise_db, indent=2)
+
+    return f"""
+You are to create a personalized, beginner-friendly workout plan using ONLY the following exercises:
+
+{exercise_text}
+
+The user is:
+- Age: {user['age']}
+- Gender: {user['gender']}
+- Goal: {user['goal']}
+- Days per week: {user['days_per_week']}
+
+Rules:
+1. Create exactly {user['days_per_week']} workouts.
+2. Use classic muscle splits like Push / Pull / Legs.
+3. Each workout day must have 3 to 5 exercises.
+4. For each exercise provide:
+    - name (must exactly match the name from the provided exercise list)
+    - sets
+    - reps
+
+Output the entire workout plan strictly as valid JSON ONLY, like this:
+
+[
+    {{
+        "day_name": "Push Day",
+        "exercises": [
+            {{"name": "Bench Press", "sets": 3, "reps": 10}},
+            ...
+        ]
+    }},
+    ...
+]
+
+Do not include any explanations, notes, or comments. Only output valid JSON.
+    """.strip()
