@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import ExerciseCarousel from "@/components/exercise-carousel";
 
+
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center">
