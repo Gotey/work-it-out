@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { slugify } from "@/lib/slugify";
+import { isExerciseCompleted } from "@/lib/progress";
 
 export default function DayPage() {
   const params = useParams();
@@ -33,36 +34,33 @@ export default function DayPage() {
       <h1 className="text-xl font-bold mb-4">{workout.day_name}</h1>
 
       <motion.div className="grid gap-4" initial="hidden" animate="show">
-        {workout.exercises.map((exercise: any, i: number) => (
-          <motion.div key={i}>
-            <Link href={`/week1/${params.day}/${slugify(exercise.name)}`}>
-              <Card className="hover:bg-muted/50 transition-colors">
-                <CardContent className="p-4 flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">{exercise.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {exercise.sets} sets × {exercise.reps} reps
-                    </p>
-                  </div>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-chevron-right"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </CardContent>
-              </Card>
-            </Link>
-          </motion.div>
-        ))}
+        {workout.exercises.map((exercise: any, i: number) => {
+          const completed = isExerciseCompleted(
+            Number(params.day),
+            slugify(exercise.name)
+          );
+
+          return (
+            <motion.div key={i}>
+              <Link href={`/week1/${params.day}/${slugify(exercise.name)}`}>
+                <Card
+                  className={`transition-colors ${
+                    completed ? "bg-green-100" : "bg-white"
+                  } hover:bg-muted/50`}
+                >
+                  <CardContent className="p-4 flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">{exercise.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {exercise.sets} sets × {exercise.reps} reps
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </motion.div>
+          );
+        })}
       </motion.div>
     </div>
   );
