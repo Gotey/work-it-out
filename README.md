@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/1717dbed-9fda-47f1-9c1a-c970f3c099a2)
+
 # Work-it-Out
 
 **Work-it-Out** is a personal fitness companion that generates dynamic workout plans and uses real-time pose tracking to monitor your form and count reps — all from your browser.
