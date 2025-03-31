@@ -1,10 +1,12 @@
-# TrainBuddy
+<img src="https://github.com/user-attachments/assets/74af6da2-91a2-44ac-b387-be17adafc68a" alt="alt text" height="350">
 
-**TrainBuddy** is a personal fitness companion that generates dynamic workout plans and uses real-time pose tracking to monitor your form and count reps — all from your browser.
+# Work-it-Out
+
+**Work-it-Out** is a personal fitness companion that generates dynamic workout plans and uses real-time pose tracking to monitor your form and count reps — all from your browser.
 
 ## 🧠 Overview
 
-TrainBuddy bridges the gap between workout planning and execution. Using AI, it builds a personalized fitness plan. Then, through real-time computer vision, it tracks your form via webcam and counts your reps — offering both guidance and accountability.
+Work-it-Out bridges the gap between workout planning and execution. Using AI, it builds a personalized fitness plan. Then, through real-time computer vision, it tracks your form via webcam and counts your reps — offering both guidance and accountability.
 
 ---
 
@@ -44,13 +46,9 @@ TrainBuddy bridges the gap between workout planning and execution. Using AI, it 
 - Next.js / React
 - Python + Flask
 - MediaPipe (Pose Detection)
-- TensorFlow
 - Framer Motion (UI animations)
-- OpenCV
 - Vercel (Frontend deployment)
-- Ngrok (for local Flask tunneling)
 - JSON-based GPT output
-- Windows Subprocess Handling
 
 ---
 
