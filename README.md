@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/1717dbed-9fda-47f1-9c1a-c970f3c099a2)
+<img src="https://github.com/user-attachments/assets/74af6da2-91a2-44ac-b387-be17adafc68a" alt="alt text" height="350">
 
 # Work-it-Out
 
