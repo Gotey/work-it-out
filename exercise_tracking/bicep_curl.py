@@ -2,6 +2,10 @@ import cv2
 import mediapipe as mp
 import math
 import os
+import pygame
+
+pygame.mixer.init()
+sound = pygame.mixer.Sound("exercise_tracking/sfx_point.mp3")  # Use WAV for better compatibility if possible
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -57,7 +61,7 @@ def detect_both_bicep_curls(landmarks, h, w):
     left_angle = calc_angle(l_shoulder, l_elbow, l_wrist)
     right_angle = calc_angle(r_shoulder, r_elbow, r_wrist)
 
-    both_up = left_angle < 50 and right_angle < 50
+    both_up = left_angle < 70 and right_angle < 70
     both_down = left_angle > 160 and right_angle > 160
 
     return {"both_up": both_up, "both_down": both_down, "left_angle": int(left_angle), "right_angle": int(right_angle)}
@@ -89,6 +93,7 @@ while cap.isOpened():
                 rep_count += 1
                 hit_top = False
                 rep_state = "WAITING_UP"
+                sound.play()
 
         # ======== Custom styled body ========
         for connection in mp_pose.POSE_CONNECTIONS:

@@ -1,6 +1,11 @@
 import cv2
 import mediapipe as mp
 import math
+import pygame
+
+pygame.mixer.init()
+sound = pygame.mixer.Sound("exercise_tracking/sfx_point.mp3")  # Use WAV for better compatibility if possible
+
 
 # === CONFIGURATION ===
 CONFIG = {
@@ -128,6 +133,7 @@ while cap.isOpened():
                 if phase["correct_form"]:
                     rep_count += 1
                     rep_state = "WAITING_DOWN"
+                    sound.play()
                 else:
                     rep_state = "INCORRECT FORM!"
                 hit_bottom = False

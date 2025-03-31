@@ -1,7 +1,14 @@
 import cv2
 import mediapipe as mp
 import math
+import os
+import pygame
 
+pygame.mixer.init()
+sound = pygame.mixer.Sound("exercise_tracking/sfx_point.mp3")  # Use WAV for better compatibility if possible
+
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Only show errors, no warnings or info
 # === CONFIGURATION ===
 CONFIG = {
     "show_labels": True,
@@ -114,6 +121,7 @@ while cap.isOpened():
                 rep_count += 1
                 hit_bottom = False
                 rep_state = "WAITING_DOWN"
+                sound.play()
 
         # === Draw Landmarks ===
         mp_drawing.draw_landmarks(

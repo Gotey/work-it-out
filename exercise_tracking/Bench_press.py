@@ -1,5 +1,12 @@
 import cv2
 import mediapipe as mp
+import os
+import pygame
+
+pygame.mixer.init()
+sound = pygame.mixer.Sound("exercise_tracking/sfx_point.mp3")  # Use WAV for better compatibility if possible
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Only show errors, no warnings or info
 
 # === CONFIGURATION ===
 CONFIG = {
@@ -82,6 +89,7 @@ def process_rep_state(left_shoulder, left_elbow, h):
                 # Reset for the next rep.
                 max_diff = None
                 min_diff = None
+                sound.play()
 
     prev_diff = current_diff
     return current_diff
